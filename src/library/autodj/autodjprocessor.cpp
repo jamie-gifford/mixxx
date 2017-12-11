@@ -220,7 +220,7 @@ void AutoDJProcessor::fadeNow() {
         // we cannot fade if AutoDj is disabled or already fading
         return;
     }
-
+    
     double crossfader = getCrossfader();
     DeckAttributes* pLeftDeck = getLeftDeck();
     DeckAttributes* pRightDeck = getRightDeck();
@@ -263,6 +263,10 @@ void AutoDJProcessor::fadeNow() {
         emit autoDJError(ADJ_NOT_TWO_DECKS);
         return;
     }
+
+    // Put outselves into cortina mode
+    qDebug() << "Setting cortina mode TRUE";
+    m_cortina = true;
 
     // playPosition() is in the range of 0..1
     const double fromDeckCurrentSecond = fromDeckDuration * pFromDeck->playPosition();
@@ -538,6 +542,10 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::toggleAutoDJ(bool enable) {
             // playerPositionChanged for deck1 after the track is loaded.
             m_eState = ADJ_ENABLE_P1LOADED;
 
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE A";
+            m_cortina = false;
+
             // Move crossfader to the left.
             setCrossfader(-1.0);
 
@@ -549,6 +557,11 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::toggleAutoDJ(bool enable) {
             // One of the two decks is playing. Switch into IDLE mode and wait
             // until the playing deck crosses posThreshold to start fading.
             m_eState = ADJ_IDLE;
+
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE B";
+            m_cortina = false;
+
             if (leftDeckPlaying) {
                 // Load track into the right deck.
                 emitLoadTrackToPlayer(nextTrack, pRightDeck->group, false);
@@ -693,6 +706,10 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
             // for the playing deck).
             m_eState = ADJ_IDLE;
 
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE C";
+            m_cortina = false;
+
             if (!rightDeckPlaying) {
                 // Only left deck playing!
                 // In ADJ_ENABLE_P1LOADED mode we wait until the left deck
@@ -738,6 +755,11 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
                 setCrossfader(1.0);
             }
             m_eState = ADJ_IDLE;
+
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE D";
+            m_cortina = false;
+
             // Invalidate threshold calculated for the old otherDeck
             // This avoids starting a fade back before the new track is
             // loaded into the otherDeck
@@ -791,6 +813,11 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
                 // Re-cue the track if the user has seeked forward and will miss the fadeBeginPos
                 if (otherDeck->playPosition() >= otherDeck->fadeBeginPos - toDeckFadeDistance) {
                     otherDeck->setPlayPosition(otherDeck->startPos);
+                } else {
+                    // Normal case: TP override, rewind track by fadeDuration
+                    // so that it doesn't start until the first track (cortina)
+                    // is faded.
+                    otherDeck->setPlayPosition(-toDeckFadeDistance);
                 }
 
                 if (!otherDeckPlaying) {
@@ -855,6 +882,15 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
                 // we move the crossfader linearly with
                 // movements in this track's play position.
                 setCrossfader(currentCrossfader + adjustment);
+
+                // TODO implement XXXX
+
+                // TP: if we are in cortina mode, then:
+                //
+                // If thisDeck is left, the new crossfade value is 0 plus half the
+                // adjustment.  If thisDeck is right, the new value is minus half the
+                // adjustment.
+
             }
             m_transitionProgress = transitionProgress;
             // if we are at 1.0 here, we need an additional callback until the last

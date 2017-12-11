@@ -286,6 +286,10 @@ class AutoDJProcessor : public QObject {
     double m_transitionTime; // the desired value set by the user
     TransitionMode m_transitionMode;
 
+    // Fader transitions only affect "cortina" transitions, which are triggered
+    // by the Fade Now button.
+    bool m_cortina;
+    
     QList<DeckAttributes*> m_decks;
 
     ControlProxy* m_pCOCrossfader;
