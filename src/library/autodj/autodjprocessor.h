@@ -297,7 +297,7 @@ class AutoDJProcessor : public QObject {
     bool m_cortina;
 
     time_t m_lastDump;
-    
+
     QList<DeckAttributes*> m_decks;
 
     ControlProxy* m_pCOCrossfader;
