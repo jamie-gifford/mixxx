@@ -216,11 +216,12 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::shufflePlaylist(
 }
 
 void AutoDJProcessor::fadeNow() {
+
     if (m_eState != ADJ_IDLE) {
         // we cannot fade if AutoDj is disabled or already fading
         return;
     }
-
+    
     double crossfader = getCrossfader();
     DeckAttributes* pLeftDeck = getLeftDeck();
     DeckAttributes* pRightDeck = getRightDeck();
@@ -237,9 +238,19 @@ void AutoDJProcessor::fadeNow() {
             (!pRightDeck->isPlaying() || crossfader < 0.0)) {
         pFromDeck = pLeftDeck;
         pToDeck = pRightDeck;
+
+        // Put outselves into cortina mode
+        qDebug() << "Setting cortina mode TRUE";
+        m_cortina = true;
+
     } else if (pRightDeck->isPlaying()) {
         pFromDeck = pRightDeck;
         pToDeck = pLeftDeck;
+
+        // Put outselves into cortina mode
+        qDebug() << "Setting cortina mode TRUE";
+        m_cortina = true;
+
     } else {
         // Neither deck is playing. Fading now makes no sense.
         return;
@@ -275,7 +286,13 @@ void AutoDJProcessor::fadeNow() {
     pFromDeck->fadeBeginPos = fromDeckCurrentSecond;
     // Do not seek to a calculated start point; start the to deck from wherever
     // it is if the user has seeked since loading the track.
+
     pToDeck->startPos = toDeckCurrentSecond;
+
+    if (m_cortina && toDeckDuration > 0) {
+        pToDeck->startPos = - m_transitionTime;
+        pToDeck->setPlayPosition(-m_transitionTime / toDeckDuration);
+    }
 
     // If the user presses "Fade now", assume they want to fade *now*, not later.
     // So if the spinbox time is negative, do not insert silence.
@@ -534,6 +551,10 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::toggleAutoDJ(bool enable) {
             // playerPositionChanged for deck1 after the track is loaded.
             m_eState = ADJ_ENABLE_P1LOADED;
 
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE A";
+            m_cortina = false;
+
             // Move crossfader to the left.
             setCrossfader(-1.0);
 
@@ -545,6 +566,11 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::toggleAutoDJ(bool enable) {
             // One of the two decks is playing. Switch into IDLE mode and wait
             // until the playing deck crosses posThreshold to start fading.
             m_eState = ADJ_IDLE;
+
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE B";
+            m_cortina = false;
+
             if (leftDeckPlaying) {
                 // Load track into the right deck.
                 emitLoadTrackToPlayer(nextTrack, pRightDeck->group, false);
@@ -688,6 +714,10 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
             // for the playing deck).
             m_eState = ADJ_IDLE;
 
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE C";
+            m_cortina = false;
+
             if (!rightDeckPlaying) {
                 // Only left deck playing!
                 // In ADJ_ENABLE_P1LOADED mode we wait until the left deck
@@ -733,6 +763,11 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
                 setCrossfader(1.0);
             }
             m_eState = ADJ_IDLE;
+
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE D";
+            m_cortina = false;
+
             // Invalidate threshold calculated for the old otherDeck
             // This avoids starting a fade back before the new track is
             // loaded into the otherDeck
@@ -1167,6 +1202,7 @@ double AutoDJProcessor::samplePositionToSeconds(double samplePosition, DeckAttri
 void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
         DeckAttributes* pToDeck,
         bool seekToStartPoint) {
+
     VERIFY_OR_DEBUG_ASSERT(pFromDeck && pToDeck) {
         return;
     }
@@ -1431,6 +1467,7 @@ void AutoDJProcessor::useFixedFadeTime(
         double fromDeckSecond,
         double fadeEndSecond,
         double toDeckStartSecond) {
+
     if (m_transitionTime > 0.0) {
         // Guard against the next track being too short. This transition must finish
         // before the next transition starts.
