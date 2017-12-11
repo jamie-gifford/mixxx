@@ -189,6 +189,10 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::fadeNow() {
         if (crossfader <= 0.3 && leftDeck.isPlaying()) {
             // left deck is playing and the crossfader is on the left
 
+            // Put outselves into cortina mode
+            qDebug() << "Setting cortina mode TRUE";
+            m_cortina = true;
+
             // Make sure leftDeck.fadeDuration is up to date.
             calculateTransition(&leftDeck, &rightDeck);
 
@@ -197,8 +201,13 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::fadeNow() {
                     ((crossfader + 1.0) / 2 * (leftDeck.fadeDuration));
             // Repeat is disabled by FadeNow but disables auto Fade
             leftDeck.setRepeat(false);
+
         } else if (crossfader >= -0.3 && rightDeck.isPlaying()) {
             // right deck is playing and the crossfader is on the right
+
+            // Put outselves into cortina mode
+            qDebug() << "Setting cortina mode TRUE";
+            m_cortina = true;
 
             // Make sure rightDeck.fadeDuration is up to date.
             calculateTransition(&rightDeck, &leftDeck);
@@ -318,6 +327,10 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::toggleAutoDJ(bool enable) {
             // playerPositionChanged for deck1 after the track is loaded.
             m_eState = ADJ_ENABLE_P1LOADED;
 
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE A";
+            m_cortina = false;
+
             // Move crossfader to the left.
             setCrossfader(-1.0, false);
 
@@ -329,6 +342,11 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::toggleAutoDJ(bool enable) {
             // One of the two decks is playing. Switch into IDLE mode and wait
             // until the playing deck crosses posThreshold to start fading.
             m_eState = ADJ_IDLE;
+
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE B";
+            m_cortina = false;
+
             if (deck1Playing) {
                 // Update fade thresholds for the left deck.
                 calculateTransition(&leftDeck, &rightDeck);
@@ -428,6 +446,10 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
             // for the playing deck).
             m_eState = ADJ_IDLE;
 
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE C";
+            m_cortina = false;
+
             if (leftDeckPlaying && !rightDeckPlaying) {
                 // In ADJ_ENABLE_P1LOADED mode we wait until the left deck
                 // successfully starts playing. We don't know in toggleAutoDJ
@@ -468,6 +490,11 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
                 setCrossfader(1.0, true);
             }
             m_eState = ADJ_IDLE;
+
+            // Ensure not in cortina mode
+            qDebug() << "Setting cortina mode FALSE D";
+            m_cortina = false;
+
             // Invalidate threshold calculated for the old otherDeck
             // This avoids starting a fade back before the new track is
             // loaded into the otherDeck
@@ -518,6 +545,11 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
                     double maxPlaypos = 1.0 - (otherDeck.fadeDuration * 2);
                     if (maxPlaypos < otherDeckPlaypos) {
                         otherDeck.setPlayPosition(maxPlaypos);
+                    } else {
+                      // Normal case: TP override, rewind track by fadeDuration
+                      // so that it doesn't start until the first track (cortina)
+                      // is faded.
+                      otherDeck.setPlayPosition(-otherDeck.fadeDuration);
                     }
                 }
                 otherDeck.play();
@@ -547,6 +579,13 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
             // If thisDeck is left, the new crossfade value is -1 plus the
             // adjustment.  If thisDeck is right, the new value is 1.0 minus the
             // adjustment.
+
+            // TP: if we are in cortina mode, then:
+            // 
+            // If thisDeck is left, the new crossfade value is 0 plus half the
+            // adjustment.  If thisDeck is right, the new value is minus half the
+            // adjustment.
+          
             double crossfadeEdgeValue = -1.0;
             double adjustment = 2 * (thisPlayPosition - thisDeck.posThreshold) /
                     (posFadeEnd - thisDeck.posThreshold);
@@ -554,6 +593,10 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
             if (!isLeft) {
                 crossfadeEdgeValue = 1.0;
                 adjustment *= -1.0;
+            }
+            if (m_cortina) {
+              crossfadeEdgeValue = 0;
+              adjustment /= 2;
             }
             setCrossfader(crossfadeEdgeValue + adjustment, isLeft);
         }
@@ -709,9 +752,11 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
             qDebug() << fromTrack->getLocation()
                     << "fromTrackDuration =" << fromTrackDuration;
 
+            qDebug() << "Cortina mode = " << m_cortina;
+            
             // The track might be shorter than the transition period. Use a
             // sensible cap.
-            m_nextTransitionTime = math_min(m_iTransitionTime,
+            m_nextTransitionTime = math_min((m_cortina ? m_iTransitionTime : 0),
                                             fromTrackDuration / 2);
 
             if (pToDeck) {
