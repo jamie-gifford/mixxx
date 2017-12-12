@@ -20,7 +20,7 @@ constexpr double kKeepPosition = -1.0;
 // A track needs to be longer than two callbacks to not stop AutoDJ
 constexpr double kMinimumTrackDurationSec = 0.2;
 
-constexpr bool sDebug = false;
+constexpr bool sDebug = true;
 } // anonymous namespace
 
 DeckAttributes::DeckAttributes(int index,
@@ -690,6 +690,13 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
         return;
     }
 
+    if (sDebug) {
+        qDebug() << this << "playerPositionChanged" << pAttributes->group
+                 << thisPlayPosition;
+    }
+
+    dumpTracks(false);
+
     // Note: this can be a delayed call of playerPositionChanged() where
     // the track was playing, but is now stopped.
     bool thisDeckPlaying = thisDeck->isPlaying();
@@ -945,6 +952,49 @@ TrackPointer AutoDJProcessor::getNextTrackFromQueue() {
             return nextTrack;
         }
     }
+}
+
+void AutoDJProcessor::dumpTracks(bool force) {
+
+  time_t now = time(NULL);
+  if (! force && m_lastDump) {
+    double diff = difftime(now, m_lastDump);
+
+    if (diff <= 1) {
+      return;
+    }
+  }
+
+  m_lastDump = now;
+  
+  QFile dumpfile("/tmp/mixxxtool.m3u");
+
+  dumpfile.open(QIODevice::WriteOnly);
+
+  QTextStream dumpstream(&dumpfile);
+  
+  double cx = getCrossfader();
+  int deckIndex = cx < 0.5 ? 0 : 1;
+  DeckAttributes& deck = *m_decks[deckIndex];
+
+  TrackPointer currentTrack = deck.getLoadedTrack();
+
+  if (currentTrack) {
+    dumpstream << currentTrack->getLocation() << "\n";
+  }
+  
+  int rows = m_pAutoDJTableModel->rowCount();
+
+  for (int i = 0; i < rows; i++) {
+
+    TrackPointer track = m_pAutoDJTableModel->getTrack(m_pAutoDJTableModel->index(i, 0));
+    
+    if (track && track != currentTrack) {
+      dumpstream << track->getLocation() << "\n";
+    }
+  }
+
+  dumpfile.close();
 }
 
 bool AutoDJProcessor::loadNextTrackFromQueue(const DeckAttributes& deck, bool play) {
