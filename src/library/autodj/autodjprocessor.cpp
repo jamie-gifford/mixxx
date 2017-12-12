@@ -935,7 +935,7 @@ TrackPointer AutoDJProcessor::getNextTrackFromQueue() {
 void AutoDJProcessor::dumpTracks(bool force) {
 
   time_t now = time(NULL);
-  if (! force && m_lastDump != NULL) {
+  if (! force) {
     int diff = difftime(now, m_lastDump);
 
     if (diff <= 1) {
@@ -1054,6 +1054,8 @@ void AutoDJProcessor::playerPlayChanged(DeckAttributes* thisDeck, bool playing) 
     if constexpr (sDebug) {
         qDebug() << this << "playerPlayChanged" << thisDeck->group << playing;
     }
+
+    dumpTracks(true);
 
     if (m_eState != ADJ_IDLE) {
         // We don't want to recalculate a running transition
