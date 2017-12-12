@@ -20,7 +20,7 @@ constexpr double kKeepPosition = -1.0;
 // A track needs to be longer than two callbacks to not stop AutoDJ
 constexpr double kMinimumTrackDurationSec = 0.2;
 
-constexpr bool sDebug = true;
+constexpr bool sDebug = false;
 } // anonymous namespace
 
 DeckAttributes::DeckAttributes(int index,
