@@ -11,7 +11,7 @@
 const char* kTransitionPreferenceName = "Transition";
 const int kTransitionPreferenceDefault = 10;
 
-static const bool sDebug = false;
+static const bool sDebug = true;
 
 DeckAttributes::DeckAttributes(int index,
                                BaseTrackPlayer* pPlayer,
@@ -178,6 +178,7 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::shufflePlaylist(
 }
 
 AutoDJProcessor::AutoDJError AutoDJProcessor::fadeNow() {
+
     // Auto-DJ needs at least two decks
     DEBUG_ASSERT_AND_HANDLE(m_decks.length() > 1) {
         return ADJ_NOT_TWO_DECKS;
@@ -402,6 +403,8 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
         qDebug() << this << "playerPositionChanged" << pAttributes->group
                  << thisPlayPosition;
     }
+
+    dumpTracks(false);
 
     // Auto-DJ needs at least two decks
     DEBUG_ASSERT_AND_HANDLE(m_decks.length() > 1) {
@@ -632,6 +635,51 @@ TrackPointer AutoDJProcessor::getNextTrackFromQueue() {
             return nextTrack;
         }
     }
+}
+
+void AutoDJProcessor::dumpTracks(bool force) {
+
+  time_t now = time(NULL);
+  if (! force && m_lastDump != NULL) {
+    int diff = difftime(now, m_lastDump);
+
+    if (diff <= 1) {
+      return;
+    }
+  }
+
+  m_lastDump = now;
+  
+  QFile dumpfile("/tmp/mixxxtool.m3u");
+
+  dumpfile.open(QIODevice::WriteOnly);
+
+  QTextStream dumpstream(&dumpfile);
+  
+  double cx = getCrossfader();
+  int deckIndex = cx < 0.5 ? 0 : 1;
+  DeckAttributes& deck = *m_decks[deckIndex];
+
+  TrackPointer currentTrack = deck.getLoadedTrack();
+
+  if (currentTrack) {
+    dumpstream << currentTrack->getLocation() << "\n";
+  }
+  
+  int rows = m_pAutoDJTableModel->rowCount();
+
+  for (int i = 0; i < rows; i++) {
+
+    TrackPointer track = m_pAutoDJTableModel->getTrack(m_pAutoDJTableModel->index(i, 0));
+    
+    if (track && track != currentTrack) {
+      if (track->exists()) {
+        dumpstream << track->getLocation() << "\n";
+      }
+    }
+  }
+
+  dumpfile.close();
 }
 
 bool AutoDJProcessor::loadNextTrackFromQueue(const DeckAttributes& deck, bool play) {
