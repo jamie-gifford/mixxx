@@ -11,7 +11,7 @@
 const char* kTransitionPreferenceName = "Transition";
 const double kTransitionPreferenceDefault = 10.0;
 
-static const bool sDebug = true;
+static const bool sDebug = false;
 
 DeckAttributes::DeckAttributes(int index,
                                BaseTrackPlayer* pPlayer,
@@ -661,7 +661,7 @@ TrackPointer AutoDJProcessor::getNextTrackFromQueue() {
 void AutoDJProcessor::dumpTracks(bool force) {
 
   time_t now = time(NULL);
-  if (! force && m_lastDump != NULL) {
+  if (! force) {
     int diff = difftime(now, m_lastDump);
 
     if (diff <= 1) {
@@ -676,11 +676,19 @@ void AutoDJProcessor::dumpTracks(bool force) {
   dumpfile.open(QIODevice::WriteOnly);
 
   QTextStream dumpstream(&dumpfile);
-  
+
   double cx = getCrossfader();
   int deckIndex = cx < 0.5 ? 0 : 1;
   DeckAttributes& deck = *m_decks[deckIndex];
 
+  qDebug() << " deck index " << deckIndex << " playing=" << deck.isPlaying();
+  
+  if (deck.isPlaying()) {
+    dumpstream << "# mixxxtool playback-status playing\n";
+  } else {
+    dumpstream << "# mixxxtool playback-status paused\n";
+  }
+  
   TrackPointer currentTrack = deck.getLoadedTrack();
 
   if (currentTrack) {
@@ -778,6 +786,9 @@ void AutoDJProcessor::playerPlayChanged(DeckAttributes* pAttributes, bool playin
     if (sDebug) {
         qDebug() << this << "playerPlayChanged" << pAttributes->group << playing;
     }
+
+    dumpTracks(true);
+    
     // We may want to do more than just calculate fade thresholds when playing
     // state changes so keep these two as separate methods for now.
 
