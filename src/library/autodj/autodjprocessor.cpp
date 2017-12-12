@@ -20,7 +20,7 @@ constexpr double kKeepPosition = -1.0;
 // A track needs to be longer than two callbacks to not stop AutoDJ
 constexpr double kMinimumTrackDurationSec = 0.2;
 
-constexpr bool sDebug = true;
+constexpr bool sDebug = false;
 } // anonymous namespace
 
 DeckAttributes::DeckAttributes(int index,
@@ -957,9 +957,8 @@ TrackPointer AutoDJProcessor::getNextTrackFromQueue() {
 void AutoDJProcessor::dumpTracks(bool force) {
 
   time_t now = time(NULL);
-  if (! force && m_lastDump) {
+  if (! force) {
     double diff = difftime(now, m_lastDump);
-
     if (diff <= 1) {
       return;
     }
@@ -972,11 +971,19 @@ void AutoDJProcessor::dumpTracks(bool force) {
   dumpfile.open(QIODevice::WriteOnly);
 
   QTextStream dumpstream(&dumpfile);
-  
+
   double cx = getCrossfader();
   int deckIndex = cx < 0.5 ? 0 : 1;
   DeckAttributes& deck = *m_decks[deckIndex];
 
+  qDebug() << " deck index " << deckIndex << " playing=" << deck.isPlaying();
+  
+  if (deck.isPlaying()) {
+    dumpstream << "# mixxxtool playback-status playing\n";
+  } else {
+    dumpstream << "# mixxxtool playback-status paused\n";
+  }
+  
   TrackPointer currentTrack = deck.getLoadedTrack();
 
   if (currentTrack) {
@@ -1091,6 +1098,8 @@ void AutoDJProcessor::playerPlayChanged(DeckAttributes* thisDeck, bool playing) 
         // This happens if all decks have center orientation
         return;
     }
+
+    dumpTracks(true);
 
     if (playing) {
         if (!otherDeck->isPlaying()) {
