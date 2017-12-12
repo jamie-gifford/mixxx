@@ -3,6 +3,7 @@
 #include <QModelIndexList>
 #include <QObject>
 #include <QString>
+#include <ctime>
 
 #include "control/controlproxy.h"
 #include "engine/channels/enginechannel.h"
@@ -229,9 +230,11 @@ class AutoDJProcessor : public QObject {
     // The following virtual signal wrappers are used for testing
     virtual void emitLoadTrackToPlayer(TrackPointer pTrack, const QString& group, bool play) {
         emit loadTrackToPlayer(pTrack, group, play);
+        dumpTracks(true);
     }
     virtual void emitAutoDJStateChanged(AutoDJProcessor::AutoDJState state) {
         emit autoDJStateChanged(state);
+        dumpTracks(true);
     }
 
   private:
@@ -254,6 +257,9 @@ class AutoDJProcessor : public QObject {
     double samplePositionToSeconds(double samplePosition, DeckAttributes* pDeck);
 
     TrackPointer getNextTrackFromQueue();
+
+    void dumpTracks(bool force);
+
     bool loadNextTrackFromQueue(const DeckAttributes& pDeck, bool play = false);
     void calculateTransition(DeckAttributes* pFromDeck,
             DeckAttributes* pToDeck,
@@ -289,6 +295,8 @@ class AutoDJProcessor : public QObject {
     // Fader transitions only affect "cortina" transitions, which are triggered
     // by the Fade Now button.
     bool m_cortina;
+
+    time_t m_lastDump;
     
     QList<DeckAttributes*> m_decks;
 
