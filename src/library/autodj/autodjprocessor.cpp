@@ -21,7 +21,7 @@ const double kMinimumTrackDurationSec = 0.2;
 
 const mixxx::audio::ChannelCount kChannelCount = mixxx::kEngineChannelCount;
 
-constexpr bool sDebug = false;
+constexpr bool sDebug = true;
 } // anonymous namespace
 
 DeckAttributes::DeckAttributes(int index,
@@ -640,6 +640,8 @@ void AutoDJProcessor::crossfaderChanged(double value) {
             return;
         }
 
+        dumpTracks(false);
+
         double crossfaderPosition = value * (m_pCOCrossfaderReverse->toBool() ? -1 : 1);
         if ((crossfaderPosition == 1.0 && pFromDeck->isLeft()) ||       // crossfader right
                 (crossfaderPosition == -1.0 && pFromDeck->isRight())) { // crossfader left
@@ -922,6 +924,51 @@ TrackPointer AutoDJProcessor::getNextTrackFromQueue() {
             return nextTrack;
         }
     }
+}
+
+void AutoDJProcessor::dumpTracks(bool force) {
+
+  time_t now = time(NULL);
+  if (! force && m_lastDump) {
+    double diff = difftime(now, m_lastDump);
+
+    if (diff <= 1) {
+      return;
+    }
+  }
+
+  m_lastDump = now;
+  
+  QFile dumpfile("/tmp/mixxxtool.m3u");
+
+  dumpfile.open(QIODevice::WriteOnly);
+
+  QTextStream dumpstream(&dumpfile);
+  
+  double cx = getCrossfader();
+  int deckIndex = cx < 0.5 ? 0 : 1;
+  DeckAttributes& deck = *m_decks[deckIndex];
+
+  TrackPointer currentTrack = deck.getLoadedTrack();
+
+  if (currentTrack) {
+    dumpstream << currentTrack->getLocation() << "\n";
+  }
+  
+  int rows = m_pAutoDJTableModel->rowCount();
+
+  for (int i = 0; i < rows; i++) {
+
+    TrackPointer track = m_pAutoDJTableModel->getTrack(m_pAutoDJTableModel->index(i, 0));
+    
+    if (track && track != currentTrack) {
+      if (track->checkFileExists()) {
+        dumpstream << track->getLocation() << "\n";
+      }
+    }
+  }
+
+  dumpfile.close();
 }
 
 bool AutoDJProcessor::loadNextTrackFromQueue(const DeckAttributes& deck, bool play) {
