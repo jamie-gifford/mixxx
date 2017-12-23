@@ -12,15 +12,15 @@
 
 // TagLib has support for the Ogg Opus file format since version 1.9
 #define TAGLIB_HAS_OPUSFILE \
-    ((TAGLIB_MAJOR_VERSION > 1) || ((TAGLIB_MAJOR_VERSION == 1) && (TAGLIB_MINOR_VERSION >= 9)))
+    ((TAGLIB_MAJOR_VERSION > 1) || ((TAGLIB_MAJOR_VERSION == 1) && (TAGLIB_MINOR_VERSION >= 9) && FALSE))
 
 // TagLib has support for hasID3v2Tag()/ID3v2Tag() for WAV files since version 1.9
 #define TAGLIB_HAS_WAV_ID3V2TAG \
-    (TAGLIB_MAJOR_VERSION > 1) || ((TAGLIB_MAJOR_VERSION == 1) && (TAGLIB_MINOR_VERSION >= 9))
+    (TAGLIB_MAJOR_VERSION > 1) || ((TAGLIB_MAJOR_VERSION == 1) && (TAGLIB_MINOR_VERSION >= 9) && FALSE)
 
 // TagLib has support for hasID3v2Tag() for AIFF files since version 1.10
 #define TAGLIB_HAS_AIFF_HAS_ID3V2TAG \
-    (TAGLIB_MAJOR_VERSION > 1) || ((TAGLIB_MAJOR_VERSION == 1) && (TAGLIB_MINOR_VERSION >= 10))
+    (TAGLIB_MAJOR_VERSION > 1) || ((TAGLIB_MAJOR_VERSION == 1) && (TAGLIB_MINOR_VERSION >= 10) && FALSE)
 
 #include <QImage>
 
