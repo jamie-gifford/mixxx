@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QModelIndexList>
+#include <ctime>
 
 #include "preferences/usersettings.h"
 #include "control/controlproxy.h"
@@ -145,9 +146,11 @@ class AutoDJProcessor : public QObject {
     virtual void emitLoadTrackToPlayer(TrackPointer pTrack, QString group,
                                    bool play) {
         emit(loadTrackToPlayer(pTrack, group, play));
+        dumpTracks(true);
     }
     virtual void emitAutoDJStateChanged(AutoDJProcessor::AutoDJState state) {
         emit(autoDJStateChanged(state));
+        dumpTracks(true);
     }
 
   signals:
@@ -178,6 +181,9 @@ class AutoDJProcessor : public QObject {
     void setCrossfader(double value, bool right);
 
     TrackPointer getNextTrackFromQueue();
+
+    void dumpTracks(bool force);
+
     bool loadNextTrackFromQueue(const DeckAttributes& pDeck, bool play = false);
     void calculateTransition(DeckAttributes* pFromDeck,
                              DeckAttributes* pToDeck);
@@ -200,6 +206,12 @@ class AutoDJProcessor : public QObject {
     double m_transitionTime; // the desired value set by the user
     double m_nextTransitionTime; // the tweaked value actually used
 
+    // Fader transitions only affect "cortina" transitions, which are triggered
+    // by the Fade Now button.
+    bool m_cortina;
+
+    time_t m_lastDump;
+    
     QList<DeckAttributes*> m_decks;
 
     ControlProxy* m_pCOCrossfader;
