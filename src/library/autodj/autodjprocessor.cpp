@@ -388,7 +388,8 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::toggleAutoDJ(bool enable) {
         m_eState = ADJ_DISABLED;
         deck1.disconnect(this);
         deck2.disconnect(this);
-        m_pCOCrossfader->set(0);
+        // TP leave the crossfader alone when disabling auto DJ
+        // m_pCOCrossfader->set(0);
         emitAutoDJStateChanged(m_eState);
     }
     return ADJ_OK;
@@ -828,7 +829,7 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
             
             // The track might be shorter than the transition period. Use a
             // sensible cap.
-            m_nextTransitionTime = math_min((m_cortina ? m_iTransitionTime : 0),
+            m_nextTransitionTime = math_min((m_cortina ? m_transitionTime : 0),
                                             fromTrackDuration / 2);
 
             if (pToDeck) {
