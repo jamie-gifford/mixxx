@@ -1176,6 +1176,13 @@ void WTrackTableView::slotAddToAutoDJTop() {
 }
 
 void WTrackTableView::slotAddToAutoDJReplace() {
+    if (QMessageBox::question(
+                nullptr,
+                "Replace Auto DJ",
+                "Do you really want to replace the Auto DJ playlist?",
+                QMessageBox::Ok | QMessageBox::Cancel) != QMessageBox::Ok) {
+        return ;
+    }
     addToAutoDJ(PlaylistDAO::AutoDJSendLoc::REPLACE);
 }
 
