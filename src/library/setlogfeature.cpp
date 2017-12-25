@@ -249,7 +249,10 @@ void SetlogFeature::slotPlayingTrackChanged(TrackPointer currentPlayingTrack) {
         m_recentTracks.push_front(currentPlayingTrackId);
 
         // Keep a window of 6 tracks (inspired by 2 decks, 4 samplers)
-        const int kRecentTrackWindow = 6;
+
+        // TP modify to 2, better match for milonga use
+        // const int kRecentTrackWindow = 6;
+        const int kRecentTrackWindow = 2;
         while (m_recentTracks.size() > kRecentTrackWindow) {
             m_recentTracks.pop_back();
         }
