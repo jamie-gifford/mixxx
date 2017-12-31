@@ -77,6 +77,10 @@ AutoDJProcessor::AutoDJProcessor(QObject* pParent,
           m_nextTransitionTime(kTransitionPreferenceDefault) {
     m_pAutoDJTableModel = new PlaylistTableModel(this, pTrackCollection,
                                                  "mixxx.db.model.autodj");
+
+    connect(m_pAutoDJTableModel, SIGNAL(modelChanged()),
+    		this, SLOT(modelChanged()));
+
     m_pAutoDJTableModel->setTableModel(iAutoDJPlaylistId);
 
     m_pShufflePlaylist = new ControlPushButton(
@@ -249,6 +253,7 @@ AutoDJProcessor::AutoDJError AutoDJProcessor::skipNext() {
 }
 
 AutoDJProcessor::AutoDJError AutoDJProcessor::toggleAutoDJ(bool enable) {
+
     DeckAttributes& deck1 = *m_decks[0];
     DeckAttributes& deck2 = *m_decks[1];
     bool deck1Playing = deck1.isPlaying();
@@ -665,7 +670,7 @@ void AutoDJProcessor::dumpTracks(bool force) {
   if (! force) {
     int diff = difftime(now, m_lastDump);
 
-    if (diff <= 1) {
+    if (diff <= 30) {
       return;
     }
   }
@@ -698,7 +703,8 @@ void AutoDJProcessor::dumpTracks(bool force) {
   
   int rows = m_pAutoDJTableModel->rowCount();
 
-  for (int i = 0; i < rows; i++) {
+  // Put maximum of 30 in output to avoid problems if the playlist is massive
+  for (int i = 0; i < rows && i < 30; i++) {
 
     TrackPointer track = m_pAutoDJTableModel->getTrack(m_pAutoDJTableModel->index(i, 0));
     
@@ -788,7 +794,8 @@ void AutoDJProcessor::playerPlayChanged(DeckAttributes* pAttributes, bool playin
         qDebug() << this << "playerPlayChanged" << pAttributes->group << playing;
     }
 
-    dumpTracks(true);
+	// trigger dumpTracks on next iteration
+	m_lastDump = 0;
     
     // We may want to do more than just calculate fade thresholds when playing
     // state changes so keep these two as separate methods for now.
@@ -1010,3 +1017,9 @@ bool AutoDJProcessor::nextTrackLoaded() {
 
     return loadedTrack == getNextTrackFromQueue();
 }
+
+void AutoDJProcessor::modelChanged() {
+	// trigger dumpTracks on next iteration
+	m_lastDump = 0;
+}
+

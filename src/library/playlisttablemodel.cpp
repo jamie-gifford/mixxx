@@ -270,5 +270,6 @@ TrackModel::CapabilitiesFlags PlaylistTableModel::getCapabilities() const {
 void PlaylistTableModel::playlistChanged(int playlistId) {
     if (playlistId == m_iPlaylistId) {
         select(); // Repopulate the data model.
+        emit(modelChanged());
     }
 }
