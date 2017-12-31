@@ -236,6 +236,7 @@ class AutoDJProcessor : public QObject {
         emit autoDJStateChanged(state);
         dumpTracks(true);
     }
+    void modelChanged();
 
   private:
     // Gets or sets the crossfader position while normalizing it so that -1 is

@@ -876,7 +876,7 @@ void WTrackTableView::slotAddToAutoDJReplace() {
                 QMessageBox::Ok | QMessageBox::Cancel) != QMessageBox::Ok) {
         return ;
     }
-    
+
     addToAutoDJ(PlaylistDAO::AutoDJSendLoc::REPLACE);
 }
 
