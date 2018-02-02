@@ -532,7 +532,7 @@ void BasePlaylistFeature::slotExportPlaylist() {
                          << "and exporting to M3U.";
                 file_location.append(".m3u");
             }
-            ParserM3u::writeM3UFile(file_location, playlist_items, useRelativePath);
+            ParserM3u::writeM3U8File(file_location, playlist_items, useRelativePath);
         }
     }
 }
