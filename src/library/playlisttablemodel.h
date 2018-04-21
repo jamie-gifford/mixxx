@@ -32,6 +32,9 @@ class PlaylistTableModel : public BaseSqlTableModel {
     bool isLocked() final;
     CapabilitiesFlags getCapabilities() const final;
 
+  signals:
+    void modelChanged();
+
   private slots:
     void playlistChanged(int playlistId);
 

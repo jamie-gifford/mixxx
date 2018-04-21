@@ -1370,6 +1370,15 @@ void WTrackTableView::slotSendToAutoDJTop() {
 }
 
 void WTrackTableView::slotSendToAutoDJReplace() {
+
+    if (QMessageBox::question(
+                            nullptr,
+                            "Replace Auto DJ",
+                            "Do you really want to replace the Auto DJ playlist?",
+                            QMessageBox::Ok | QMessageBox::Cancel) != QMessageBox::Ok) {
+      return ;
+    }
+  
     sendToAutoDJ(PlaylistDAO::AutoDJSendLoc::REPLACE);
 }
 
