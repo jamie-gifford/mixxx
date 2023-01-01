@@ -930,7 +930,7 @@ void AutoDJProcessor::dumpTracks(bool force) {
 
   time_t now = time(NULL);
   if (! force) {
-    int diff = difftime(now, m_lastDump);
+    double diff = difftime(now, m_lastDump);
 
     if (diff <= 1) {
       return;
