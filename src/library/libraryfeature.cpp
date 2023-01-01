@@ -86,7 +86,7 @@ bool LibraryFeature::exportPlaylistItemsIntoFile(
                 }
             }
         }
-        return ParserM3u::writeM3UFile(
+        return ParserM3u::writeM3U8File(
                 playlistFilePath,
                 playlistItemLocations,
                 useRelativePath);
