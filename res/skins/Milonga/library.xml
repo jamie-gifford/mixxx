@@ -49,15 +49,6 @@
                           <LibrarySidebar></LibrarySidebar>
                         </Children>
                       </WidgetGroup>
-                      <!--Cover Art-->
-                      <CoverArt>
-                        <SizePolicy>me,me</SizePolicy>
-                        <MinimumSize>40,40</MinimumSize>
-                        <Connection>
-                          <ConfigKey persist="true">[Library],show_coverart</ConfigKey>
-                          <BindProperty>visible</BindProperty>
-                        </Connection>
-                      </CoverArt>
                     </Children>
                   </Splitter>
 
