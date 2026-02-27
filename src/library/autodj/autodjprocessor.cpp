@@ -959,6 +959,12 @@ void AutoDJProcessor::dumpTracks(bool force) {
   int deckIndex = cx < 0.5 ? 0 : 1;
   DeckAttributes& deck = *m_decks[deckIndex];
 
+  if (deck.isPlaying()) {
+    dumpstream << "# mixxxtool playback-status playing\n";
+  } else {
+    dumpstream << "# mixxxtool playback-status paused\n";
+  }
+
   TrackPointer currentTrack = deck.getLoadedTrack();
 
   if (currentTrack) {
