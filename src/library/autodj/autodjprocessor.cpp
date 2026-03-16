@@ -24,6 +24,8 @@ const mixxx::audio::ChannelCount kChannelCount = mixxx::kEngineChannelCount;
 constexpr bool sDebug = false;
 } // anonymous namespace
 
+const double INTER_TRACK_GAP_SECONDS = 4.0;
+
 DeckAttributes::DeckAttributes(int index,
         BaseTrackPlayer* pPlayer)
         : index(index),
@@ -1290,6 +1292,10 @@ double AutoDJProcessor::samplePositionToSeconds(double samplePosition, DeckAttri
 void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
         DeckAttributes* pToDeck,
         bool seekToStartPoint) {
+
+    double gapSeconds = m_transitionMode == TransitionMode::FixedSkipSilence ? INTER_TRACK_GAP_SECONDS : 0.0;
+    double a_transitionTime = m_cortina ? m_transitionTime : gapSeconds;
+
     VERIFY_OR_DEBUG_ASSERT(pFromDeck && pToDeck) {
         return;
     }
@@ -1348,7 +1354,7 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
         // This can happen if we have just enabled auto DJ
         outroStart = fromDeckPosition;
         if (fromDeckPosition > outroEnd) {
-            outroEnd = math_min(outroStart + fabs(m_transitionTime), fromDeckEndPosition);
+            outroEnd = math_min(outroStart + fabs(a_transitionTime), fromDeckEndPosition);
         }
     }
     double outroLength = outroEnd - outroStart;
@@ -1362,7 +1368,7 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
     double toDeckOutroStartSecond = getOutroStartSecond(pToDeck);
     if (pToDeck->fadeEndPos == toDeckOutroStartSecond) {
         // outro not defined, use transition time.
-        toDeckOutroStartSecond -= m_transitionTime;
+        toDeckOutroStartSecond -= a_transitionTime;
     }
     pToDeck->fadeBeginPos = toDeckOutroStartSecond;
 
@@ -1385,7 +1391,7 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
         // to a reasonable values. If the seek was too big, ignore it.
         introLength = introEnd - toDeckStartSeconds;
         if (introLength > (introEnd - introStart) * 2 &&
-                introLength > (introEnd - introStart) + m_transitionTime &&
+                introLength > (introEnd - introStart) + a_transitionTime &&
                 introLength > outroLength) {
             introLength = 0;
         }
@@ -1559,13 +1565,17 @@ void AutoDJProcessor::useFixedFadeTime(
         double fromDeckSecond,
         double fadeEndSecond,
         double toDeckStartSecond) {
-    if (m_transitionTime > 0.0) {
+
+    double gapSeconds = m_transitionMode == TransitionMode::FixedSkipSilence ? INTER_TRACK_GAP_SECONDS : 0.0;
+    double a_transitionTime = m_cortina ? m_transitionTime : gapSeconds;
+
+    if (a_transitionTime > 0.0) {
         // Guard against the next track being too short. This transition must finish
         // before the next transition starts.
         double toDeckOutroStart = pToDeck->fadeBeginPos;
         if (pToDeck->fadeBeginPos >= pToDeck->fadeEndPos) {
             // no outro defined, the toDeck will also use the transition time
-            toDeckOutroStart -= m_transitionTime;
+            toDeckOutroStart -= a_transitionTime;
         }
         if (toDeckOutroStart <= toDeckStartSecond + kMinimumTrackDurationSec) {
             // we have already passed the outro start
@@ -1585,7 +1595,7 @@ void AutoDJProcessor::useFixedFadeTime(
             toDeckOutroStart = (end - toDeckStartSecond) / 2 + toDeckStartSecond;
         }
         double transitionTime = math_min(toDeckOutroStart - toDeckStartSecond,
-                m_transitionTime);
+                a_transitionTime);
         VERIFY_OR_DEBUG_ASSERT(transitionTime >= kMinimumTrackDurationSec / 2) {
             transitionTime = kMinimumTrackDurationSec / 2;
         }
@@ -1597,7 +1607,7 @@ void AutoDJProcessor::useFixedFadeTime(
     } else {
         pFromDeck->fadeBeginPos = fadeEndSecond;
         pFromDeck->fadeEndPos = fadeEndSecond;
-        pToDeck->startPos = toDeckStartSecond + m_transitionTime;
+        pToDeck->startPos = toDeckStartSecond + a_transitionTime;
     }
 }
 
