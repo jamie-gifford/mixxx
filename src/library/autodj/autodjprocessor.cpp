@@ -825,7 +825,9 @@ void AutoDJProcessor::playerPositionChanged(DeckAttributes* pAttributes,
                     // Normal case: TP override, rewind track by fadeDuration
                     // so that it doesn't start until the first track (cortina)
                     // is faded.
-                    otherDeck->setPlayPosition(-toDeckFadeDistance);
+                    if (m_cortina) {
+                        otherDeck->setPlayPosition(-toDeckFadeDistance);
+                    }
                 }
 
                 if (!otherDeckPlaying) {
@@ -1504,9 +1506,7 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
     case TransitionMode::FixedSkipSilence: {
         double toDeckStartSecond;
 
-        double gapSeconds = getTrackGapSeconds();
-
-        pToDeck->fadeBeginPos = getLastSoundSecond(pToDeck) + gapSeconds;
+        pToDeck->fadeBeginPos = getLastSoundSecond(pToDeck);
 
         if (seekToStartPoint || toDeckPositionSeconds >= pToDeck->fadeBeginPos) {
             // toDeckPosition >= pToDeck->fadeBeginPos happens when the
@@ -1518,12 +1518,12 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
             toDeckStartSecond = toDeckPositionSeconds;
         }
 
-        useFixedFadeTime(
-                pFromDeck,
-                pToDeck,
-                fromDeckPosition,
-                getLastSoundSecond(pFromDeck) + gapSeconds,
-                toDeckStartSecond);
+        pFromDeck->fadeBeginPos = getLastSoundSecond(pFromDeck);
+        pFromDeck->fadeEndPos = getLastSoundSecond(pFromDeck);
+
+        double gapSeconds = getTrackGapSeconds();
+        pToDeck->startPos = toDeckStartSecond - gapSeconds;
+
     } break;
     case TransitionMode::FixedFullTrack:
     default: {
