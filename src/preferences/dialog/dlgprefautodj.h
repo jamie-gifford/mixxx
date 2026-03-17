@@ -23,6 +23,7 @@ class DlgPrefAutoDJ : public DlgPreferencePage, public Ui::DlgPrefAutoDJDlg {
     void slotToggleRequeueIgnore(int);
     void slotSetRequeueIgnoreTime(const QTime& a_rTime);
     void slotSetRandomQueueMin(int);
+    void slotSetTrackGapSeconds(int);
     void slotConsiderRepeatPlaylistState(int);
     void slotToggleRandomQueue(int);
 

@@ -24,7 +24,7 @@ const mixxx::audio::ChannelCount kChannelCount = mixxx::kEngineChannelCount;
 constexpr bool sDebug = false;
 } // anonymous namespace
 
-const double INTER_TRACK_GAP_SECONDS = 4.0;
+// const double INTER_TRACK_GAP_SECONDS = 4.0;
 
 DeckAttributes::DeckAttributes(int index,
         BaseTrackPlayer* pPlayer)
@@ -1293,8 +1293,7 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
         DeckAttributes* pToDeck,
         bool seekToStartPoint) {
 
-    double gapSeconds = m_transitionMode == TransitionMode::FixedSkipSilence ? INTER_TRACK_GAP_SECONDS : 0.0;
-    double a_transitionTime = m_cortina ? m_transitionTime : gapSeconds;
+    double a_transitionTime = m_cortina ? m_transitionTime : 0.00;
 
     VERIFY_OR_DEBUG_ASSERT(pFromDeck && pToDeck) {
         return;
@@ -1504,7 +1503,11 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
     } break;
     case TransitionMode::FixedSkipSilence: {
         double toDeckStartSecond;
-        pToDeck->fadeBeginPos = getLastSoundSecond(pToDeck);
+
+        double gapSeconds = getTrackGapSeconds();
+
+        pToDeck->fadeBeginPos = getLastSoundSecond(pToDeck) + gapSeconds;
+
         if (seekToStartPoint || toDeckPositionSeconds >= pToDeck->fadeBeginPos) {
             // toDeckPosition >= pToDeck->fadeBeginPos happens when the
             // user has seeked or played the to track behind fadeBeginPos of
@@ -1514,11 +1517,12 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
         } else {
             toDeckStartSecond = toDeckPositionSeconds;
         }
+
         useFixedFadeTime(
                 pFromDeck,
                 pToDeck,
                 fromDeckPosition,
-                getLastSoundSecond(pFromDeck),
+                getLastSoundSecond(pFromDeck) + gapSeconds,
                 toDeckStartSecond);
     } break;
     case TransitionMode::FixedFullTrack:
@@ -1566,8 +1570,7 @@ void AutoDJProcessor::useFixedFadeTime(
         double fadeEndSecond,
         double toDeckStartSecond) {
 
-    double gapSeconds = m_transitionMode == TransitionMode::FixedSkipSilence ? INTER_TRACK_GAP_SECONDS : 0.0;
-    double a_transitionTime = m_cortina ? m_transitionTime : gapSeconds;
+    double a_transitionTime = m_cortina ? m_transitionTime : 0.0;
 
     if (a_transitionTime > 0.0) {
         // Guard against the next track being too short. This transition must finish
@@ -1878,3 +1881,7 @@ void AutoDJProcessor::modelChanged() {
 	m_lastDump = 0;
 }
 
+int AutoDJProcessor::getTrackGapSeconds() {
+    int gap = m_pConfig->getValueString(ConfigKey(kConfigKey, "TrackGapSeconds")).toInt();
+    return gap;
+}

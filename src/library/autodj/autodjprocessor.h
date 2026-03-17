@@ -310,4 +310,6 @@ class AutoDJProcessor : public QObject {
     ControlPushButton* m_pEnabledAutoDJ;
 
     DISALLOW_COPY_AND_ASSIGN(AutoDJProcessor);
+
+    int getTrackGapSeconds();
 };
