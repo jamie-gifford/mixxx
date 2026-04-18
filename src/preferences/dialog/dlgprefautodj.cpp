@@ -48,7 +48,7 @@ DlgPrefAutoDJ::DlgPrefAutoDJ(QWidget* pParent,
 
     TrackGapSpinBox->setValue(
             m_pConfig->getValue(
-                    ConfigKey("[Auto DJ]", "TrackGapSeconds"), 3));
+                    ConfigKey("[Auto DJ]", "TrackGapDeciseconds"), 25));
 
     // "[Auto DJ], Requeue" is set by 'Repeat Playlist' toggle in DlgAutoDj GUI.
     // If it's checked un-check 'Random Queue'
@@ -70,7 +70,7 @@ DlgPrefAutoDJ::DlgPrefAutoDJ(QWidget* pParent,
     connect(TrackGapSpinBox,
             QOverload<int>::of(&QSpinBox::valueChanged),
             this,
-            &DlgPrefAutoDJ::slotSetTrackGapSeconds);
+            &DlgPrefAutoDJ::slotSetTrackGapDeciseconds);
 
 }
 
@@ -127,7 +127,7 @@ void DlgPrefAutoDJ::slotCancel() {
 
     TrackGapSpinBox->setValue(
         m_pConfig->getValue(
-                ConfigKey("[Auto DJ]", "TrackGapSeconds"), 3));
+                ConfigKey("[Auto DJ]", "TrackGapDeciseconds"), 3));
 
     RandomQueueCheckBox->setChecked(
             m_pConfig->getValue(
@@ -185,11 +185,11 @@ void DlgPrefAutoDJ::slotSetRandomQueueMin(int a_iValue) {
     m_pConfig->set(ConfigKey("[Auto DJ]", "RandomQueueMinimumAllowedBuff"), str);
 }
 
-void DlgPrefAutoDJ::slotSetTrackGapSeconds(int a_iValue) {
+void DlgPrefAutoDJ::slotSetTrackGapDeciseconds(int a_iValue) {
     QString str;
     //qDebug() << "min allowed " << a_iValue;
     str.setNum(a_iValue);
-    m_pConfig->set(ConfigKey("[Auto DJ]", "TrackGapSeconds"), str);
+    m_pConfig->set(ConfigKey("[Auto DJ]", "TrackGapDeciseconds"), str);
 }
 
 

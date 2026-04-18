@@ -311,5 +311,5 @@ class AutoDJProcessor : public QObject {
 
     DISALLOW_COPY_AND_ASSIGN(AutoDJProcessor);
 
-    int getTrackGapSeconds();
+    int getTrackGapDeciseconds();
 };

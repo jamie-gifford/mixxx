@@ -1521,7 +1521,7 @@ void AutoDJProcessor::calculateTransition(DeckAttributes* pFromDeck,
         pFromDeck->fadeBeginPos = getLastSoundSecond(pFromDeck);
         pFromDeck->fadeEndPos = getLastSoundSecond(pFromDeck);
 
-        double gapSeconds = getTrackGapSeconds();
+        double gapSeconds = ((double)getTrackGapDeciseconds()) / 10.0;
         pToDeck->startPos = toDeckStartSecond - gapSeconds;
 
     } break;
@@ -1881,7 +1881,7 @@ void AutoDJProcessor::modelChanged() {
 	m_lastDump = 0;
 }
 
-int AutoDJProcessor::getTrackGapSeconds() {
-    int gap = m_pConfig->getValueString(ConfigKey(kConfigKey, "TrackGapSeconds")).toInt();
+int AutoDJProcessor::getTrackGapDeciseconds() {
+    int gap = m_pConfig->getValueString(ConfigKey(kConfigKey, "TrackGapDeciseconds")).toInt();
     return gap;
 }
